@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity >=0.8.17;
+pragma solidity ^0.8.12;
 //
 // Heavily inspired from
 // https://github.com/maxrobot/elliptic-solidity/blob/master/contracts/Secp256r1.sol
@@ -8,10 +8,10 @@ pragma solidity >=0.8.17;
 // and modified jacobian double
 // optimisations to avoid to an from from affine and jacobian coordinates
 //
-struct PassKeyId {
+
+struct Passkey {
     uint256 pubKeyX;
     uint256 pubKeyY;
-    string keyId;
 }
 
 struct JPoint {
@@ -37,23 +37,13 @@ library Secp256r1 {
     uint256 constant MOST_SIGNIFICANT =
         0xc000000000000000000000000000000000000000000000000000000000000000;
 
-    /*
-     * Verify
-     * @description - verifies that a public key has signed a given message
-     * @param X - public key coordinate X
-     * @param Y - public key coordinate Y
-     * @param R - signature half R
-     * @param S - signature half S
-     * @param input - hashed message
-     */
     function Verify(
-        PassKeyId memory passKey,
+        Passkey memory passKey,
         uint r,
         uint s,
         uint e
     ) internal view returns (bool) {
-        if (r == 0 || s == 0 || r >= nn || s >= nn) {
-            /* testing null signature, otherwise (0,0) is valid for any message*/
+        if (r >= nn || s >= nn) {
             return false;
         }
 
@@ -128,7 +118,7 @@ library Secp256r1 {
     }
 
     function _preComputeJacobianPoints(
-        PassKeyId memory passKey
+        Passkey memory passKey
     ) internal pure returns (JPoint[16] memory points) {
         // JPoint[] memory u1Points = new JPoint[](4);
         // u1Points[0] = JPoint(0, 0, 0);
@@ -359,7 +349,7 @@ library Secp256r1 {
             mstore(add(freemem, 0x80), _exp)
             mstore(add(freemem, 0xa0), _mod)
 
-            let success := staticcall(not(0), 0x5, freemem, 0xc0, freemem, 0x20)
+            let success := staticcall(1500, 0x5, freemem, 0xc0, freemem, 0x20)
             switch success
             case 0 {
                 revert(0x0, 0x0)
