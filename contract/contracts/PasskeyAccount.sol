@@ -41,7 +41,7 @@ contract PasskeyAccount is Ownable, IERC1271 {
         return _passkeyUser;
     }
 
-    // P256 独自実装の gas unit を計測するために exec から call のみを抜き出した
+    // exec を抜いた gas コストを計算するためのメソッド
     function validateExec(Call calldata data, bytes memory signature) external {
         require(
             _passkeyUser != address(0),
@@ -60,6 +60,7 @@ contract PasskeyAccount is Ownable, IERC1271 {
         );
     }
 
+    // P256 独自実装の gas unit のみを計算するためのメソッド
     function validateOnly() external {
         require(
             Secp256r1.Verify(
