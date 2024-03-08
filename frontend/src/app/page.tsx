@@ -52,6 +52,7 @@ function parseAuthSignature(authSignature: string): [BigNumber, BigNumber] {
 }
 
 type PasskeyAccountInfo = {
+  balance: BigNumber;
   owner: string;
   passkeyUser: string;
   credentialId: string;
@@ -66,7 +67,7 @@ export default function Home() {
   const sdk = useSDK();
   const [passkeyAccount, setPasskeyAccount] = useState<SmartContract | undefined>();
   const [paInfo, setPaInfo] = useState<PasskeyAccountInfo>({
-    credentialId: "", owner: "", passkeyUser: "", pubX: BigNumber.from(0), pubY: BigNumber.from(0)
+    balance: BigNumber.from(0), credentialId: "", owner: "", passkeyUser: "", pubX: BigNumber.from(0), pubY: BigNumber.from(0)
   });
 
   const [sendTargetAddress, setSendTargetAddress] = useState("");
@@ -176,11 +177,12 @@ export default function Home() {
     const contract = await sdk.getContract(contractAddress, PasskeyAccountABI);
     setPasskeyAccount(contract);
 
+    const balance = await sdk.getBalance(contractAddress);
     const owner: string = await contract.call("owner");
     const passkeyUser: string = await contract.call("passkeyUser");
     const [credentialId, pubX, pubY]: [string, BigNumber, BigNumber] = await contract.call("pubKey");
 
-    const paInfo: PasskeyAccountInfo = {owner, passkeyUser, credentialId, pubX, pubY};
+    const paInfo: PasskeyAccountInfo = {balance: balance.value, owner, passkeyUser, credentialId, pubX, pubY};
     console.debug({passkeyAccountInfo: paInfo});
     setPaInfo(paInfo);
   };
@@ -227,6 +229,10 @@ export default function Home() {
               <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-900">Address</dt>
                 <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{contractAddress}</dd>
+              </div>
+              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-900">Balance</dt>
+                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{ethers.utils.formatEther(paInfo.balance)} MATIC</dd>
               </div>
               <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-900">Owner</dt>
