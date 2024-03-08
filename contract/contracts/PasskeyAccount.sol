@@ -141,8 +141,26 @@ contract PasskeyAccount is Ownable, IERC1271 {
         bytes32 clientHash = sha256(bytes(clientData));
         bytes32 message = sha256(bytes.concat(authData, clientHash));
 
-        return
-            Secp256r1.Verify(Passkey(_pubKeyX, _pubKeyY), r, s, uint(message));
+        return _p256verify(_pubKeyX, _pubKeyY, r, s, uint(message));
+    }
+
+    function _p256verify(
+        uint256 x,
+        uint256 y,
+        uint256 r,
+        uint256 s,
+        uint256 m
+    ) internal view returns (bool) {
+        if (block.chainid == 80001) {
+            address preCompiled = 0x0000000000000000000000000000000000000100;
+            (bool success, bytes memory data) = preCompiled.staticcall(
+                abi.encodePacked(m, r, s, x, y)
+            );
+            require(success, "PasskeyAccount: precompiled call failed");
+            return uint256(bytes32(data)) == 1;
+        } else {
+            return Secp256r1.Verify(Passkey(x, y), r, s, m);
+        }
     }
 
     receive() external payable {}
