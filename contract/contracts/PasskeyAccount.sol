@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import "./Base64.sol";
+
 import "./Secp256r1.sol";
 
 contract PasskeyAccount is Ownable, IERC1271 {
@@ -39,45 +40,6 @@ contract PasskeyAccount is Ownable, IERC1271 {
 
     function passkeyUser() public view returns (address) {
         return _passkeyUser;
-    }
-
-    // exec を抜いた gas コストを計算するためのメソッド
-    function validateExec(Call calldata data, bytes memory signature) external {
-        require(
-            _passkeyUser != address(0),
-            "PasskeyAccount: public key not set"
-        );
-
-        bytes memory encodedData = abi.encodePacked(
-            data.target,
-            data.value,
-            data.data
-        );
-        bytes32 dataHash = keccak256(encodedData);
-        require(
-            _validateSignature(dataHash, signature),
-            "PasskeyAccount: invalid signature"
-        );
-    }
-
-    // P256 独自実装の gas unit のみを計算するためのメソッド
-    function validateOnly() external {
-        require(
-            Secp256r1.Verify(
-                Passkey(
-                    uint256(
-                        83119486062970621463723234150239147689579444150733362847674676168668972156964
-                    ),
-                    uint256(
-                        32209800820871644040775392329701456672571879045350053501208212991944405823015
-                    )
-                ),
-                39405845591007654470008500701080556470023227658867296452381949092934125998203,
-                22776204471958940075360173952354914804155198763908059618516467128465274258321,
-                115454300804932245136562300869966995268922671103251033963565412352482052700382
-            ),
-            "PasskeyAccount: invalid signature"
-        );
     }
 
     function exec(
@@ -141,25 +103,33 @@ contract PasskeyAccount is Ownable, IERC1271 {
         bytes32 clientHash = sha256(bytes(clientData));
         bytes32 message = sha256(bytes.concat(authData, clientHash));
 
-        return _p256verify(_pubKeyX, _pubKeyY, r, s, uint(message));
+        return
+            p256verify(uint(message), r, s, _pubKeyX, _pubKeyY) ==
+            bytes32(uint256(1));
     }
 
-    function _p256verify(
-        uint256 x,
-        uint256 y,
+    function p256verify(
+        uint256 m,
         uint256 r,
         uint256 s,
-        uint256 m
-    ) internal view returns (bool) {
+        uint256 x,
+        uint256 y
+    ) public view returns (bytes32) {
+        // Use precompiled contract
         if (block.chainid == 80001) {
+            bytes memory callData = abi.encodePacked(m, r, s, x, y);
             (bool success, bytes memory data) = address(0x100).staticcall(
-                abi.encodePacked(m, r, s, x, y)
+                callData
             );
             require(success, "PasskeyAccount: precompiled call failed");
             bytes32 ret = abi.decode(data, (bytes32));
-            return ret == bytes32(uint256(1));
+            return ret;
+        }
+
+        if (Secp256r1.Verify(Passkey(x, y), r, s, m)) {
+            return bytes32(uint256(1));
         } else {
-            return Secp256r1.Verify(Passkey(x, y), r, s, m);
+            return bytes32(uint256(0));
         }
     }
 
