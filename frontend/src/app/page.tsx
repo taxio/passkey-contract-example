@@ -215,7 +215,7 @@ export default function Home() {
               <span className="text-gray-200" aria-hidden="true">|</span>
               <button
                 type="button"
-                className="rounded-md bg-white font-medium text-gray-900 hover:text-gray-800"
+                className="rounded-md bg-white font-medium text-amber-600 hover:text-gray-800"
                 onClick={handleRegisterPasskey}
               >
                 Register Passkey
@@ -268,7 +268,7 @@ export default function Home() {
         </div>
 
         <div className="mt-12 mr-10 grid grid-cols-1 place-items-end">
-          <form className="w-full max-w-lg" onSubmit={handleSend}>
+          <form className="w-full max-w-lg">
             <div className="md:flex md:items-center mb-6">
               <div className="md:w-1/3">
                 <label className="block text-gray-500 font-bold md:text-right mb-1 md:mb-0 pr-4"
@@ -300,7 +300,9 @@ export default function Home() {
             <div className="grid grid-cols-1 place-items-end">
               <button
                 className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
-                type="button">
+                type="button"
+                onClick={handleSend}
+              >
                 Send
               </button>
             </div>
