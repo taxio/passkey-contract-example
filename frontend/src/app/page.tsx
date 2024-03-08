@@ -187,37 +187,126 @@ export default function Home() {
 
   return (
     <main>
-      <h1>Passkey on contract</h1>
-      <ConnectWallet/>
+      <header className="bg-white">
+        <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
+          <div className="flex flex-1">
+            <div className="hidden lg:flex lg:gap-x-12">
+              <h1 className="text-4xl font-semibold leading-6 text-gray-900">PASSKEY ON CONTRACT</h1>
+            </div>
+          </div>
+          <div className="flex flex-1 justify-end">
+            <ConnectWallet/>
+          </div>
+        </nav>
+      </header>
 
-      <br/>
+      <div className="mx-8">
+        <div className="overflow-hidden bg-white shadow sm:rounded-lg">
+          <div className="px-4 py-6 sm:px-6">
+            <h2 className="text-xl font-semibold leading-7 text-gray-900">Passkey Account</h2>
+            <div className="py-4 flex flex-shrink-0 space-x-4">
+              <button
+                type="button"
+                className="rounded-md bg-white font-medium text-indigo-600 hover:text-indigo-500"
+                onClick={handleConnectContract}
+              >
+                Connect
+              </button>
+              <span className="text-gray-200" aria-hidden="true">|</span>
+              <button
+                type="button"
+                className="rounded-md bg-white font-medium text-gray-900 hover:text-gray-800"
+                onClick={handleRegisterPasskey}
+              >
+                Register Passkey
+              </button>
+            </div>
+          </div>
+          <div className="border-t border-gray-100">
+            <dl className="divide-y divide-gray-100">
+              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-900">Address</dt>
+                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{contractAddress}</dd>
+              </div>
+              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-900">Owner</dt>
+                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{paInfo.owner}</dd>
+              </div>
+              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-900">Passkey User</dt>
+                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{paInfo.passkeyUser}</dd>
+              </div>
+              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium text-gray-900">Credential ID</dt>
+                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{paInfo.credentialId}</dd>
+              </div>
+              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                <dt className="text-sm font-medium leading-6 text-gray-900">Public Key</dt>
+                <dd className="mt-2 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                  <ul role="list" className="divide-y divide-gray-100 rounded-md border border-gray-200">
+                    <li className="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
+                      <div className="flex w-0 flex-1 items-center">
+                        <div className="ml-4 flex min-w-0 flex-1 gap-2">
+                          <span className="truncate font-medium">X</span>
+                          <span className="flex-shrink-0 text-gray-400">{paInfo.pubX.toString()}</span>
+                        </div>
+                      </div>
+                    </li>
+                    <li className="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
+                      <div className="flex w-0 flex-1 items-center">
+                        <div className="ml-4 flex min-w-0 flex-1 gap-2">
+                          <span className="truncate font-medium">Y</span>
+                          <span className="flex-shrink-0 text-gray-400">{paInfo.pubY.toString()}</span>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
 
-      <p>Contract: {contractAddress}</p>
-      <button onClick={handleConnectContract}>Connect</button>
-
-      <br/>
-
-      <p>Owner: {paInfo.owner}</p>
-      <p>Passkey User: {paInfo.passkeyUser}</p>
-      <p>Credential ID: {paInfo.credentialId}</p>
-      <p>Public Key X: {paInfo.pubX.toString()}</p>
-      <p>Public Key Y: {paInfo.pubY.toString()}</p>
-
-      <button onClick={handleRegisterPasskey}>Register Passkey</button>
-
-      <br/>
-      <br/>
-
-      <label>Send Target Address</label>
-      <input value={sendTargetAddress} onChange={e => setSendTargetAddress(e.target.value)}/>
-
-      <br/>
-      <label>Send Value</label>
-      <input type="number" value={sendValue} onChange={e => setSendValue(e.target.value)}/>
-
-      <br/>
-      <button onClick={handleSend}>Send</button>
-
+        <div className="mt-12 mr-10 grid grid-cols-1 place-items-end">
+          <form className="w-full max-w-lg" onSubmit={handleSend}>
+            <div className="md:flex md:items-center mb-6">
+              <div className="md:w-1/3">
+                <label className="block text-gray-500 font-bold md:text-right mb-1 md:mb-0 pr-4"
+                       htmlFor="inline-target-address">
+                  Target Address
+                </label>
+              </div>
+              <div className="md:w-2/3">
+                <input
+                  className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
+                  id="inline-target-address" type="text" value={sendTargetAddress}
+                  onChange={e => setSendTargetAddress(e.target.value)}/>
+              </div>
+            </div>
+            <div className="md:flex md:items-center mb-6">
+              <div className="md:w-1/3">
+                <label className="block text-gray-500 font-bold md:text-right mb-1 md:mb-0 pr-4"
+                       htmlFor="inline-send-value">
+                  Send Value
+                </label>
+              </div>
+              <div className="md:w-2/3">
+                <input
+                  className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
+                  id="inline-send-value" type="number" value={sendValue} onChange={e => setSendValue(e.target.value)}
+                  placeholder="0.1"/>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 place-items-end">
+              <button
+                className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
+                type="button">
+                Send
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </main>
   );
 }
