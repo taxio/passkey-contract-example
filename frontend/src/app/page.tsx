@@ -62,7 +62,7 @@ type PasskeyAccountInfo = {
 
 export default function Home() {
   const username = "demo_user";
-  const contractAddress = "0x526e5726050C6722c21786b799B5808B2240fCC0"
+  const contractAddress = "0xb56eCfA5167a8fd9d36Aaf54D38355d7d62f54A8"
 
   const sdk = useSDK();
   const [passkeyAccount, setPasskeyAccount] = useState<SmartContract | undefined>();
