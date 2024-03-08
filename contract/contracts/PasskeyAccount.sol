@@ -152,12 +152,12 @@ contract PasskeyAccount is Ownable, IERC1271 {
         uint256 m
     ) internal view returns (bool) {
         if (block.chainid == 80001) {
-            address preCompiled = 0x0000000000000000000000000000000000000100;
-            (bool success, bytes memory data) = preCompiled.staticcall(
+            (bool success, bytes memory data) = address(0x100).staticcall(
                 abi.encodePacked(m, r, s, x, y)
             );
             require(success, "PasskeyAccount: precompiled call failed");
-            return uint256(bytes32(data)) == 1;
+            bytes32 ret = abi.decode(data, (bytes32));
+            return ret == bytes32(uint256(1));
         } else {
             return Secp256r1.Verify(Passkey(x, y), r, s, m);
         }
