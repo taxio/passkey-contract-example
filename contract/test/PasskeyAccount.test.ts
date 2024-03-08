@@ -56,4 +56,31 @@ describe("PasskeyAccount", function () {
       await ethers.provider.getBalance(await account.getAddress())
     ).to.be.equal(ethers.parseEther("0.9"));
   });
+
+  it("validateExec", async function () {
+    const [metaSigner] = await ethers.getSigners();
+    const receiverAddress = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+
+    const PasskeyAccount = await ethers.getContractFactory("PasskeyAccount");
+    const account = await PasskeyAccount.deploy();
+
+    await account.setPubKey(credentialId, pubX, pubY);
+    expect(await account.pubKey()).to.deep.equal([credentialId, pubX, pubY]);
+
+    await account.validateExec(
+      {
+        target: receiverAddress,
+        value: ethers.parseEther("0.1"),
+        data: "0x",
+      },
+      "0x571eeb10645cfe7933fe22e4a4fe6a971179e9bc8c8b3ee022f35e2a4fbdd07b325adff92ac36e2e41f464281a0c1a22f70def705accaaa3aae52b09cbf5439100000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000160000000000000000000000000000000000000000000000000000000000000002549960de5880e8c687434170f6476605b8fe4aeb9a28632c7995cf3ba831d97631d0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000247b2274797065223a22776562617574686e2e676574222c226368616c6c656e6765223a22000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000037222c226f726967696e223a22687474703a2f2f6c6f63616c686f73743a33303030222c2263726f73734f726967696e223a66616c73657d000000000000000000"
+    );
+  });
+
+  it("validateOnly", async function () {
+    const PasskeyAccount = await ethers.getContractFactory("PasskeyAccount");
+    const account = await PasskeyAccount.deploy();
+
+    await account.validateOnly();
+  });
 });

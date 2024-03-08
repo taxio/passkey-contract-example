@@ -41,6 +41,44 @@ contract PasskeyAccount is Ownable, IERC1271 {
         return _passkeyUser;
     }
 
+    // P256 独自実装の gas unit を計測するために exec から call のみを抜き出した
+    function validateExec(Call calldata data, bytes memory signature) external {
+        require(
+            _passkeyUser != address(0),
+            "PasskeyAccount: public key not set"
+        );
+
+        bytes memory encodedData = abi.encodePacked(
+            data.target,
+            data.value,
+            data.data
+        );
+        bytes32 dataHash = keccak256(encodedData);
+        require(
+            _validateSignature(dataHash, signature),
+            "PasskeyAccount: invalid signature"
+        );
+    }
+
+    function validateOnly() external {
+        require(
+            Secp256r1.Verify(
+                Passkey(
+                    uint256(
+                        83119486062970621463723234150239147689579444150733362847674676168668972156964
+                    ),
+                    uint256(
+                        32209800820871644040775392329701456672571879045350053501208212991944405823015
+                    )
+                ),
+                39405845591007654470008500701080556470023227658867296452381949092934125998203,
+                22776204471958940075360173952354914804155198763908059618516467128465274258321,
+                115454300804932245136562300869966995268922671103251033963565412352482052700382
+            ),
+            "PasskeyAccount: invalid signature"
+        );
+    }
+
     function exec(
         Call calldata data,
         bytes memory signature
