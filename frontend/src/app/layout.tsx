@@ -6,7 +6,7 @@ import {Providers} from "@/app/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Passkey on contract",
+  title: "Mint by Passkey",
   description: "An example page for Passkey on contract",
 };
 
