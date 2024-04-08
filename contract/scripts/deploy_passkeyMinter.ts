@@ -1,16 +1,11 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const [owner] = await ethers.getSigners();
-
-  console.log("Owner:", owner.address);
-
-  const Collection = await ethers.getContractFactory("DemoCollection");
-  const collection = await Collection.deploy(
-    "https://example.com/tokens/{id}.json"
-  );
-  console.log("deploy tx:", collection.deploymentTransaction()?.hash);
-  console.log("deploy address:", await collection.getAddress());
+  const collectionAddress = "0xA30B06800cB4dcbBF25f9061E3bDa3c72c230338";
+  const PasskeyMinter = await ethers.getContractFactory("PasskeyMinter");
+  const passkeyMinter = await PasskeyMinter.deploy(collectionAddress);
+  console.log("deploy tx:", passkeyMinter.deploymentTransaction()?.hash);
+  console.log("deploy address:", await passkeyMinter.getAddress());
 }
 
 // We recommend this pattern to be able to use async/await everywhere
