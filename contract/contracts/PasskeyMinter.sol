@@ -37,11 +37,13 @@ contract PasskeyMinter {
         string calldata credentialId,
         uint256 x,
         uint256 y,
-        bytes32 msgHash,
+        string calldata randomString,
         bytes memory signature
     ) public {
+        bytes memory encodedData = abi.encodePacked(x, y, randomString);
+        bytes32 dataHash = keccak256(encodedData);
         require(
-            _validateSignature(x, y, msgHash, signature),
+            _validateSignature(x, y, dataHash, signature),
             "PasskeyMinter: invalid signature"
         );
         pubKeys[credentialId] = PubKey(x, y);

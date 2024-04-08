@@ -103,14 +103,14 @@ export default function Home() {
     const parsed = webauthn.parsers.parseAuthentication(authData);
     console.debug('webauthn.parsers.parseAuthentication():', parsed);
 
-    const signature = parseAuthSignature(parsed.signature);
-    console.debug({
-      challenge,
-      signature
-    });
+    const [credentialId, posX, posY]: [string, BigNumber, BigNumber] = await minter.call("publicKey", [parsed.credentialId]);
+    console.debug({credentialId, posX, posY});
+    if (posX.eq(0) && posY.eq(0)) {
+      console.error("credential is not registered");
+      return;
+    }
 
-    // TODO: PasskeyMinter で SignIn 署名の検証
-    // const res = await minter.call("validateSignature", [parsed.credentialId, challenge, signature]);
+    setPaInfo({credentialId: credentialId, pubX: posX, pubY: posY});
   }
 
   const handleRegister = async () => {
@@ -123,76 +123,51 @@ export default function Home() {
       return;
     }
 
-    const res = await webauthn.client.register(
+    /*
+     Passkey をユーザの端末に追加
+     */
+    const encodedRegistration = await webauthn.client.register(
       username,
       window.crypto.randomUUID(),
       {authenticatorType: 'auto'},
     );
-    console.debug(res);
-
-    const parsed = webauthn.parsers.parseRegistration(res);
-    console.debug(parsed);
-
-    const credentialId = parsed.credential.id;
-    const pubKeyPos = await parsePublicKeyBytes(parsed.credential.publicKey);
+    console.debug(encodedRegistration);
+    const parsedRegistration = webauthn.parsers.parseRegistration(encodedRegistration);
+    console.debug(parsedRegistration);
+    const credentialId = parsedRegistration.credential.id;
+    const pubKeyPos = await parsePublicKeyBytes(parsedRegistration.credential.publicKey);
     console.debug({
       credentialId,
       pubKeyPos
     });
 
-    // 公開鍵を登録
-
-    const randomMessage = window.crypto.randomUUID();
-    const callData = ethers.utils.solidityPack(
+    /*
+     PasskeyMinter に公開鍵を登録
+     */
+    const randomString = window.crypto.randomUUID();
+    const signTarget = ethers.utils.solidityPack(
       ["uint256", "uint256", "string"],
-      [pubKeyPos[0], pubKeyPos[1], randomMessage],
+      [pubKeyPos[0], pubKeyPos[1], randomString],
     )
-    console.debug({callData});
-    const payload = ethers.utils.keccak256(callData);
+    console.debug({signTarget});
+    const payload = ethers.utils.keccak256(signTarget);
     console.debug({payload});
     const challenge = webauthn.utils.toBase64url(ethers.utils.arrayify(payload)).replace(/=/g, '');
-    const authData = await webauthn.client.authenticate(
+    const encodedAuth = await webauthn.client.authenticate(
       [credentialId],
       challenge,
       {authenticatorType: 'auto'},
     );
-    console.debug('webauthn.client.authenticate():', authData);
-
-    // TODO: PasskeyMinter に公開鍵を登録
-    // const tx: Transaction = await minter.call("setPubKey", [credentialId, pubKeyPos[0], pubKeyPos[1], "", ""]);
+    console.debug('webauthn.client.authenticate():', encodedAuth);
+    const parsedAuth = webauthn.parsers.parseAuthentication(encodedAuth);
+    console.debug('webauthn.parsers.parseAuthentication():', parsedAuth);
+    // PasskeyMinter に公開鍵を登録
+    // const tx: Transaction = await minter.call(
+    //   "setPubKey",
+    //   [credentialId, pubKeyPos[0], pubKeyPos[1], randomString, parsedAuth.signature],
+    // );
     // console.debug({tx});
   }
-
-  // const handleRegisterPasskey = async () => {
-  //   if (!sdk) {
-  //     console.warn("SDK not ready");
-  //     return;
-  //   }
-  //   if (!passkeyAccount) {
-  //     console.warn("PasskeyAccount not ready");
-  //     return;
-  //   }
-  //
-  //   const res = await webauthn.client.register(
-  //     username,
-  //     window.crypto.randomUUID(),
-  //     {authenticatorType: 'auto'},
-  //   );
-  //   console.debug(res);
-  //
-  //   const parsed = webauthn.parsers.parseRegistration(res);
-  //   console.debug(parsed);
-  //
-  //   const credentialId = parsed.credential.id;
-  //   const pubKeyPos = await parsePublicKeyBytes(parsed.credential.publicKey);
-  //   console.debug({
-  //     credentialId,
-  //     pubKeyPos
-  //   });
-  //
-  //   const tx: Transaction = await passkeyAccount.call("setPubKey", [credentialId, pubKeyPos[0], pubKeyPos[1]]);
-  //   console.debug({tx});
-  // };
 
   const handleMint = async () => {
     if (!sdk) {
@@ -255,82 +230,6 @@ export default function Home() {
     console.debug({tx});
   }
 
-  // const handleSend = async () => {
-  //   if (!sdk) {
-  //     console.warn("SDK not ready");
-  //     return;
-  //   }
-  //   if (!passkeyAccount) {
-  //     console.warn("PasskeyAccount not ready");
-  //     return;
-  //   }
-  //
-  //   // 署名させたい Call data
-  //   const callData = ethers.utils.solidityPack(
-  //       ["address"],
-  //       [receiveAddress]
-  //   )
-  //   console.debug({callData});
-  //   const payload = ethers.utils.keccak256(callData);
-  //   console.debug({payload});
-  //
-  //   const challenge = webauthn.utils.toBase64url(ethers.utils.arrayify(payload)).replace(/=/g, '');
-  //   const authData = await webauthn.client.authenticate(
-  //     [paInfo.credentialId],
-  //     challenge,
-  //     {authenticatorType: 'auto'},
-  //   );
-  //   console.debug('webauthn.client.authenticate():', authData);
-  //
-  //   const parsed = webauthn.parsers.parseAuthentication(authData);
-  //   console.debug('webauthn.parsers.parseAuthentication():', parsed);
-  //
-  //   const signature = parseAuthSignature(parsed.signature);
-  //   console.debug({
-  //     challenge,
-  //     signature
-  //   });
-  //
-  //   const authDataBytes = new Uint8Array(webauthn.utils.parseBase64url(authData.authenticatorData));
-  //   const clientData = new TextDecoder().decode(webauthn.utils.parseBase64url(authData.clientData));
-  //   const challengePos = clientData.indexOf(challenge);
-  //   const challengePrefix = clientData.substring(0, challengePos);
-  //   const challengeSuffix = clientData.substring(challengePos + challenge.length);
-  //
-  //   const encodedSignature = ethers.utils.defaultAbiCoder.encode(
-  //     ["uint", "uint", "bytes", "string", "string"],
-  //     [signature[0], signature[1], authDataBytes, challengePrefix, challengeSuffix]
-  //   );
-  //   console.debug({
-  //     payload,
-  //     encodedSignature,
-  //   });
-  //
-  //   const tx = await passkeyAccount.call(
-  //     "mint",
-  //     [
-  //       paInfo.credentialId,
-  //       receiveAddress,
-  //       encodedSignature
-  //     ]);
-  //   console.debug({tx});
-  // };
-
-  // const handleConnectContract = async () => {
-  //   if (!sdk) {
-  //     console.warn("SDK not ready");
-  //     return;
-  //   }
-  //   const contract = await sdk.getContract(contractAddress, PasskeyAccountABI);
-  //   setPasskeyAccount(contract);
-  //
-  //   const [credentialId, pubX, pubY]: [string, BigNumber, BigNumber] = await contract.call("pubKey");
-  //
-  //   const paInfo: PasskeyAccountInfo = {credentialId, pubX, pubY};
-  //   console.debug({passkeyAccountInfo: paInfo});
-  //   setPaInfo(paInfo);
-  // };
-
   return (
     <main>
       <header className="bg-white">
@@ -354,72 +253,74 @@ export default function Home() {
       <br/>
       <button onClick={handleRegister}>Register by Your Passkey</button>
 
-      <div className="mx-8">
-        <div className="overflow-hidden bg-white shadow sm:rounded-lg">
-          <div className="px-4 py-6 sm:px-6">
-            <h2 className="text-xl font-semibold leading-7 text-gray-900">Registered Passkey</h2>
-          </div>
-          <div className="border-t border-gray-100">
-            <dl className="divide-y divide-gray-100">
-              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-900">Credential ID</dt>
-                <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{paInfo.credentialId}</dd>
-              </div>
-              <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium leading-6 text-gray-900">Public Key</dt>
-                <dd className="mt-2 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                  <ul role="list" className="divide-y divide-gray-100 rounded-md border border-gray-200">
-                    <li className="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
-                      <div className="flex w-0 flex-1 items-center">
-                        <div className="ml-4 flex min-w-0 flex-1 gap-2">
-                          <span className="truncate font-medium">X</span>
-                          <span className="flex-shrink-0 text-gray-400">{paInfo.pubX.toString()}</span>
-                        </div>
-                      </div>
-                    </li>
-                    <li className="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
-                      <div className="flex w-0 flex-1 items-center">
-                        <div className="ml-4 flex min-w-0 flex-1 gap-2">
-                          <span className="truncate font-medium">Y</span>
-                          <span className="flex-shrink-0 text-gray-400">{paInfo.pubY.toString()}</span>
-                        </div>
-                      </div>
-                    </li>
-                  </ul>
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-
-        <div className="mt-12 mr-10 grid grid-cols-1 place-items-end">
-          <form className="w-full max-w-lg">
-            <div className="md:flex md:items-center mb-6">
-              <div className="md:w-1/4">
-                <label className="block text-gray-500 font-bold md:text-right mb-1 md:mb-0 pr-4"
-                       htmlFor="inline-target-address">
-                  Receive Address
-                </label>
-              </div>
-              <div className="md:w-2/4">
-                <input
-                  className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
-                  id="inline-target-address" type="text" value={receiveAddress}
-                  onChange={e => setReceiveAddress(e.target.value)}/>
-              </div>
-              <div className="md:w-1/4">
-                <button
-                  className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
-                  type="button"
-                  onClick={handleMint}
-                >
-                  MINT
-                </button>
-              </div>
+      {paInfo.credentialId && (
+        <div className="mx-8">
+          <div className="overflow-hidden bg-white shadow sm:rounded-lg">
+            <div className="px-4 py-6 sm:px-6">
+              <h2 className="text-xl font-semibold leading-7 text-gray-900">Registered Passkey</h2>
             </div>
-          </form>
+            <div className="border-t border-gray-100">
+              <dl className="divide-y divide-gray-100">
+                <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium text-gray-900">Credential ID</dt>
+                  <dd className="mt-1 text-sm leading-6 text-gray-700 sm:col-span-2 sm:mt-0">{paInfo.credentialId}</dd>
+                </div>
+                <div className="px-4 py-6 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                  <dt className="text-sm font-medium leading-6 text-gray-900">Public Key</dt>
+                  <dd className="mt-2 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
+                    <ul role="list" className="divide-y divide-gray-100 rounded-md border border-gray-200">
+                      <li className="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
+                        <div className="flex w-0 flex-1 items-center">
+                          <div className="ml-4 flex min-w-0 flex-1 gap-2">
+                            <span className="truncate font-medium">X</span>
+                            <span className="flex-shrink-0 text-gray-400">{paInfo.pubX.toString()}</span>
+                          </div>
+                        </div>
+                      </li>
+                      <li className="flex items-center justify-between py-4 pl-4 pr-5 text-sm leading-6">
+                        <div className="flex w-0 flex-1 items-center">
+                          <div className="ml-4 flex min-w-0 flex-1 gap-2">
+                            <span className="truncate font-medium">Y</span>
+                            <span className="flex-shrink-0 text-gray-400">{paInfo.pubY.toString()}</span>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div className="mt-12 mr-10 grid grid-cols-1 place-items-end">
+            <form className="w-full max-w-lg">
+              <div className="md:flex md:items-center mb-6">
+                <div className="md:w-1/4">
+                  <label className="block text-gray-500 font-bold md:text-right mb-1 md:mb-0 pr-4"
+                         htmlFor="inline-target-address">
+                    Receive Address
+                  </label>
+                </div>
+                <div className="md:w-2/4">
+                  <input
+                    className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
+                    id="inline-target-address" type="text" value={receiveAddress}
+                    onChange={e => setReceiveAddress(e.target.value)}/>
+                </div>
+                <div className="md:w-1/4">
+                  <button
+                    className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
+                    type="button"
+                    onClick={handleMint}
+                  >
+                    MINT
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }
