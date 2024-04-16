@@ -7,11 +7,11 @@ import { BigNumber } from "ethers";
 import { ECDSASigValue } from '@peculiar/asn1-ecc';
 import { AsnParser } from '@peculiar/asn1-schema';
 import * as ethers from 'ethers';
-import { SmartContract, Transaction, ConnectWallet, useSDK, useChainId } from "@thirdweb-dev/react";
-import {PasskeyAccountABI} from "@/app/abi";
+import {SmartContract, Transaction, ConnectWallet, useSDK, useChainId, en} from "@thirdweb-dev/react";
+import {PasskeyAccountABI, VerifierABI} from "@/app/abi";
 
 const DemoCollectionAddress = "0xa30b06800cb4dcbbf25f9061e3bda3c72c230338";
-const PasskeyMinterAddress = "0x8055D16148B46F6E3129D10Ee04946088dC32Ee1";
+const PasskeyMinterAddress = "0xD32Eba345Eff89D3286e1d7822EE6D9CdA7F213c";
 
 async function parsePublicKeyBytes(publicKeyBytes: string): Promise<[BigNumber, BigNumber]> {
   const cap = {
@@ -141,6 +141,8 @@ export default function Home() {
       pubKeyPos
     });
 
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     /*
      PasskeyMinter に公開鍵を登録
      */
@@ -162,11 +164,11 @@ export default function Home() {
     const parsedAuth = webauthn.parsers.parseAuthentication(encodedAuth);
     console.debug('webauthn.parsers.parseAuthentication():', parsedAuth);
     // PasskeyMinter に公開鍵を登録
-    // const tx: Transaction = await minter.call(
-    //   "setPubKey",
-    //   [credentialId, pubKeyPos[0], pubKeyPos[1], randomString, parsedAuth.signature],
-    // );
-    // console.debug({tx});
+    const tx: Transaction = await minter.call(
+      "setPublicKey",
+      [credentialId, pubKeyPos[0], pubKeyPos[1], randomString, parsedAuth.signature],
+    );
+    console.debug({tx});
   }
 
   const handleMint = async () => {
@@ -230,6 +232,61 @@ export default function Home() {
     console.debug({tx});
   }
 
+  const handleSignDebug = async () => {
+    if (!sdk) {
+      console.warn("SDK not ready");
+      return;
+    }
+    const verifier = await sdk.getContract("0x088b50a7e7bB899C06b3ca36EBEC14F20417aE9B", VerifierABI);
+
+    const echoRes = await verifier.call("echo", ["hello"]);
+    console.debug({echoRes});
+
+    const credentialId = "-31SO85V6Y4tksZkmzhG_A";
+    const posX = BigNumber.from("0x15d628e574cf8a2bd413424965d776bb3d7952a657fc9eb7f9fbb300ed69979a");
+    const posY = BigNumber.from("0x9fca5956d8fed93149bca2474c78fba7b883398dee700fb9e13dca66549ad1fc");
+    console.debug({credentialId, posX, posY});
+
+    const signMessage = ethers.utils.solidityPack(
+      ["string", "uint256", "string"],
+      [credentialId, posX, posY],
+    )
+    console.debug({signMessage});
+    const payload = ethers.utils.keccak256(signMessage);
+    console.debug({payload});
+    const challenge = webauthn.utils.toBase64url(ethers.utils.arrayify(payload)).replace(/=/g, '');
+    const encodedAuth = await webauthn.client.authenticate(
+      [credentialId],
+      challenge,
+      {authenticatorType: 'auto'},
+    );
+    console.debug('webauthn.client.authenticate():', encodedAuth);
+    const parsedAuth = webauthn.parsers.parseAuthentication(encodedAuth);
+    console.debug('webauthn.parsers.parseAuthentication():', parsedAuth);
+
+    const signature = parseAuthSignature(parsedAuth.signature);
+    console.debug({challenge, signature});
+
+    const authDataBytes = new Uint8Array(webauthn.utils.parseBase64url(encodedAuth.authenticatorData));
+    const clientData = new TextDecoder().decode(webauthn.utils.parseBase64url(encodedAuth.clientData));
+    const challengePos = clientData.indexOf(challenge);
+    const challengePrefix = clientData.substring(0, challengePos);
+    const challengeSuffix = clientData.substring(challengePos + challenge.length);
+
+    const encodedSignature = ethers.utils.defaultAbiCoder.encode(
+      ["uint", "uint", "bytes", "string", "string"],
+      [signature[0], signature[1], authDataBytes, challengePrefix, challengeSuffix]
+    );
+    console.debug({payload, encodedSignature});
+
+    console.debug({args: {credentialId, posX, posY, payload, signature: parsedAuth.signature}});
+    const verifyRes = await verifier.call(
+      "verify",
+      [credentialId, posX, posY, payload, encodedSignature],
+    );
+    console.debug({verifyRes});
+  }
+
   return (
     <main>
       <header className="bg-white">
@@ -244,6 +301,10 @@ export default function Home() {
           </div>
         </nav>
       </header>
+
+      <br/>
+      <button onClick={handleSignDebug}>Sign Debug</button>
+      <br/>
 
       <p>Demo NFT Collection: {DemoCollectionAddress}</p>
       <br/>
