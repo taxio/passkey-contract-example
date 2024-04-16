@@ -7,11 +7,11 @@ import { BigNumber } from "ethers";
 import { ECDSASigValue } from '@peculiar/asn1-ecc';
 import { AsnParser } from '@peculiar/asn1-schema';
 import * as ethers from 'ethers';
-import { SmartContract, Transaction, ConnectWallet, useSDK, useChainId } from "@thirdweb-dev/react";
+import {SmartContract, Transaction, ConnectWallet, useSDK, useChainId, en} from "@thirdweb-dev/react";
 import {PasskeyAccountABI} from "@/app/abi";
 
-const DemoCollectionAddress = "0xa30b06800cb4dcbbf25f9061e3bda3c72c230338";
-const PasskeyMinterAddress = "0x8055D16148B46F6E3129D10Ee04946088dC32Ee1";
+const DemoCollectionAddress = "0xB3C02935EA0AE93Ba789F4fB7b871194c95962E0";
+const PasskeyMinterAddress = "0x1Aca67E8A9CA5069e09A17787A6aabDcbc83985C";
 
 async function parsePublicKeyBytes(publicKeyBytes: string): Promise<[BigNumber, BigNumber]> {
   const cap = {
@@ -141,6 +141,8 @@ export default function Home() {
       pubKeyPos
     });
 
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
     /*
      PasskeyMinter に公開鍵を登録
      */
@@ -161,12 +163,31 @@ export default function Home() {
     console.debug('webauthn.client.authenticate():', encodedAuth);
     const parsedAuth = webauthn.parsers.parseAuthentication(encodedAuth);
     console.debug('webauthn.parsers.parseAuthentication():', parsedAuth);
+
+    const signature = parseAuthSignature(parsedAuth.signature);
+    console.debug({challenge, signature});
+
+    const authDataBytes = new Uint8Array(webauthn.utils.parseBase64url(encodedAuth.authenticatorData));
+    const clientData = new TextDecoder().decode(webauthn.utils.parseBase64url(encodedAuth.clientData));
+    const challengePos = clientData.indexOf(challenge);
+    const challengePrefix = clientData.substring(0, challengePos);
+    const challengeSuffix = clientData.substring(challengePos + challenge.length);
+
+    const encodedSignature = ethers.utils.defaultAbiCoder.encode(
+      ["uint", "uint", "bytes", "string", "string"],
+      [signature[0], signature[1], authDataBytes, challengePrefix, challengeSuffix]
+    );
+    console.debug({
+      payload,
+      encodedSignature,
+    });
+
     // PasskeyMinter に公開鍵を登録
-    // const tx: Transaction = await minter.call(
-    //   "setPubKey",
-    //   [credentialId, pubKeyPos[0], pubKeyPos[1], randomString, parsedAuth.signature],
-    // );
-    // console.debug({tx});
+    const tx: Transaction = await minter.call(
+      "setPublicKey",
+      [credentialId, pubKeyPos[0], pubKeyPos[1], randomString, encodedSignature],
+    );
+    console.debug({tx});
   }
 
   const handleMint = async () => {

@@ -1,7 +1,7 @@
 import { ethers } from "hardhat";
 
 async function main() {
-  const collectionAddress = "0xA30B06800cB4dcbBF25f9061E3bDa3c72c230338";
+  const collectionAddress = "0xB3C02935EA0AE93Ba789F4fB7b871194c95962E0";
   const PasskeyMinter = await ethers.getContractFactory("PasskeyMinter");
   const passkeyMinter = await PasskeyMinter.deploy(collectionAddress);
   console.log("deploy tx:", passkeyMinter.deploymentTransaction()?.hash);
