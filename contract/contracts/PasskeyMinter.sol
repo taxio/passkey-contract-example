@@ -24,7 +24,8 @@ contract PasskeyMinter {
         collection = DemoCollection(_collection);
     }
 
-    mapping(string => PubKey) pubKeys;
+    mapping(string credentialId => PubKey) pubKeys;
+    mapping(string credentialId => bool) minted;
 
     function publicKey(
         string calldata credentialId
@@ -54,6 +55,7 @@ contract PasskeyMinter {
         address account,
         bytes memory signature
     ) external {
+        require(minted[credentialId] == false, "PasskeyMinter: already minted");
         PubKey memory pubKey = pubKeys[credentialId];
         bytes memory encodedData = abi.encodePacked(account);
         bytes32 dataHash = keccak256(encodedData);
@@ -61,6 +63,7 @@ contract PasskeyMinter {
             _validateSignature(pubKey.x, pubKey.y, dataHash, signature),
             "PasskeyMinter: invalid signature"
         );
+        minted[credentialId] = true;
         collection.mint(account);
     }
 
