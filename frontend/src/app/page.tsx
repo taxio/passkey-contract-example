@@ -61,7 +61,7 @@ type PasskeyAccountInfo = {
 };
 
 export default function Home() {
-  const username = "Passkey Mint Demo";
+  const username = "Passkeys Mint Demo";
 
   const sdk = useSDK();
   const [minter, setMinter] = useState<SmartContract | undefined>();
@@ -257,7 +257,7 @@ export default function Home() {
         <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8" aria-label="Global">
           <div className="flex flex-1">
             <div className="hidden lg:flex lg:gap-x-12">
-              <h1 className="text-4xl font-semibold leading-6 text-gray-900">MINT BY PASSKEY</h1>
+              <h1 className="text-4xl font-semibold leading-6 text-gray-900">MINT BY PASSKEYS</h1>
             </div>
           </div>
           <div className="flex flex-1 justify-end">

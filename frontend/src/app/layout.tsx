@@ -6,8 +6,8 @@ import {Providers} from "@/app/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Mint by Passkey",
-  description: "An example page for Passkey on contract",
+  title: "Mint by Passkeys",
+  description: "An example page for Passkeys on contract",
 };
 
 export default function RootLayout({
