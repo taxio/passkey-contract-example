@@ -6,7 +6,7 @@ async function main() {
   console.log("Owner:", owner.address);
 
   const collectionAddr = "0xB3C02935EA0AE93Ba789F4fB7b871194c95962E0";
-  const minterAddr = "0x1Aca67E8A9CA5069e09A17787A6aabDcbc83985C";
+  const minterAddr = "0x5329F48231e0BdE4ee3Ca1567A25C56e165f60d7";
 
   const collection = await ethers.getContractAt(
     "DemoCollection",

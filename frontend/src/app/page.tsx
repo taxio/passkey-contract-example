@@ -10,8 +10,8 @@ import * as ethers from 'ethers';
 import {SmartContract, Transaction, ConnectWallet, useSDK, useChainId, en} from "@thirdweb-dev/react";
 import {PasskeyAccountABI} from "@/app/abi";
 
-const DemoCollectionAddress = "0xB3C02935EA0AE93Ba789F4fB7b871194c95962E0";
-const PasskeyMinterAddress = "0x1Aca67E8A9CA5069e09A17787A6aabDcbc83985C";
+const DemoCollectionAddress = process.env.NEXT_PUBLIC_COLLECTION_ADDRESS!;
+const PasskeyMinterAddress = process.env.NEXT_PUBLIC_MINTER_ADDRESS!;
 
 async function parsePublicKeyBytes(publicKeyBytes: string): Promise<[BigNumber, BigNumber]> {
   const cap = {
@@ -266,15 +266,42 @@ export default function Home() {
         </nav>
       </header>
 
-      <p>Demo NFT Collection: {DemoCollectionAddress}</p>
-      <br/>
-      <p>Demo Passkey Minter: {PasskeyMinterAddress}</p>
-      <br/>
-      <button onClick={handleSignIn}>Sign in by Your Passkey</button>
-      <br/>
-      <button onClick={handleRegister}>Register by Your Passkey</button>
+      <div className="px-4 sm:px-6 lg:px-8 py-2">
+        <div className="mt-8 flow-root">
+          <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead>
+                <tr>
+                  <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-3">
+                    Contract
+                  </th>
+                  <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Address
+                  </th>
+                </tr>
+                </thead>
+                <tbody className="bg-white">
+                <tr className="even:bg-gray-50">
+                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3">
+                    NFT Collection
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{DemoCollectionAddress}</td>
+                </tr>
+                <tr className="even:bg-gray-50">
+                  <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-3">
+                    Passkeys Minter
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{PasskeyMinterAddress}</td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {paInfo.credentialId && (
+      {paInfo.credentialId ? (
         <div className="mx-8">
           <div className="overflow-hidden bg-white shadow sm:rounded-lg">
             <div className="px-4 py-6 sm:px-6">
@@ -316,21 +343,21 @@ export default function Home() {
           <div className="mt-12 mr-10 grid grid-cols-1 place-items-end">
             <form className="w-full max-w-lg">
               <div className="md:flex md:items-center mb-6">
-                <div className="md:w-1/4">
+                <div className="md:w-2/6">
                   <label className="block text-gray-500 font-bold md:text-right mb-1 md:mb-0 pr-4"
                          htmlFor="inline-target-address">
                     Receive Address
                   </label>
                 </div>
-                <div className="md:w-2/4">
+                <div className="md:w-3/6">
                   <input
                     className="bg-gray-200 appearance-none border-2 border-gray-200 rounded w-full py-2 px-4 text-gray-700 leading-tight focus:outline-none focus:bg-white focus:border-purple-500"
                     id="inline-target-address" type="text" value={receiveAddress}
                     onChange={e => setReceiveAddress(e.target.value)}/>
                 </div>
-                <div className="md:w-1/4">
+                <div className="md:w-1/6">
                   <button
-                    className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded"
+                    className="shadow bg-purple-500 hover:bg-purple-400 focus:shadow-outline focus:outline-none text-white font-bold py-2 px-4 rounded ml-2"
                     type="button"
                     onClick={handleMint}
                   >
@@ -340,6 +367,19 @@ export default function Home() {
               </div>
             </form>
           </div>
+        </div>
+      ) : (
+        <div className="mx-10 my-4">
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+            onClick={handleSignIn}>
+            Sign In
+          </button>
+          <button
+            className="bg-transparent hover:bg-blue-500 text-blue-700 font-semibold hover:text-white py-2 px-4 border border-blue-500 hover:border-transparent rounded ml-4"
+            onClick={handleRegister}>
+            Register
+          </button>
         </div>
       )}
     </main>
