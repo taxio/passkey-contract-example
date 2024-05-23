@@ -6,7 +6,7 @@ import { PolygonAmoyTestnet, Polygon } from "@thirdweb-dev/chains";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThirdwebProvider activeChain={PolygonAmoyTestnet}>
+    <ThirdwebProvider activeChain={Polygon}>
       {children}
     </ThirdwebProvider>
   )

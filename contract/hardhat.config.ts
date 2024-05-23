@@ -13,6 +13,11 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
+    polygonMainnet: {
+      chainId: 137,
+      url: process.env.POLYGON_RPC_URL!!,
+      accounts: [process.env.PRIVATE_KEY!!],
+    },
     polygonAmoy: {
       chainId: 80002,
       url: process.env.AMOY_RPC_URL!!,
