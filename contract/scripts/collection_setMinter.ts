@@ -5,10 +5,15 @@ async function main() {
 
   console.log("Owner:", owner.address);
 
-  const PasskeyAccount = await ethers.getContractFactory("PasskeyAccount");
-  const passkeyAccount = await PasskeyAccount.deploy();
-  console.log("deploy tx:", passkeyAccount.deploymentTransaction()?.hash);
-  console.log("deploy address:", await passkeyAccount.getAddress());
+  const collectionAddr = "0xB3C02935EA0AE93Ba789F4fB7b871194c95962E0";
+  const minterAddr = "0x5329F48231e0BdE4ee3Ca1567A25C56e165f60d7";
+
+  const collection = await ethers.getContractAt(
+    "DemoCollection",
+    collectionAddr
+  );
+  const tx = await collection.setMinter(minterAddr);
+  console.log("tx:", tx.hash);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

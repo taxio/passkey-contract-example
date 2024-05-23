@@ -5,6 +5,7 @@ const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.24",
     settings: {
+      viaIR: true,
       optimizer: {
         enabled: true,
         runs: 200,
@@ -12,9 +13,9 @@ const config: HardhatUserConfig = {
     },
   },
   networks: {
-    polygonMumbai: {
-      chainId: 80001,
-      url: process.env.MUMBAI_RPC_URL!!,
+    polygonAmoy: {
+      chainId: 80002,
+      url: process.env.AMOY_RPC_URL!!,
       accounts: [process.env.PRIVATE_KEY!!],
     },
   },
